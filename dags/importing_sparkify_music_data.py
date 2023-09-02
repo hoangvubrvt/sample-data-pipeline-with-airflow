@@ -14,7 +14,7 @@ default_args = {
 }
 
 @dag(
-    'udac_example',
+    'importing_sparkify_music_data',
     start_date=pendulum.now(),
     description='Load and transform data in Redshift with Airflow',
     schedule_interval="@hourly",
@@ -22,7 +22,7 @@ default_args = {
     default_args=default_args,
     catchup=False
 )
-def udac_example():
+def importing_sparkify_music_data():
     start_operator = EmptyOperator(task_id='Begin_execution')
 
     stage_events_to_redshift = StageToRedshiftOperator(
@@ -139,4 +139,4 @@ def udac_example():
 
 
 
-udac_example_dag = udac_example()
+importing_sparkify_music_data_dag = importing_sparkify_music_data()
