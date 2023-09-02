@@ -25,14 +25,14 @@ class LoadDataOperator(BaseOperator):
     def execute(self, context):
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
-        self.log.info("Clearing data from destination Redshift table")
+        self.log.info(f"Clearing data from destination Redshift {self.table} table")
         redshift.run("DELETE FROM {}".format(self.table))
 
-        self.log.info("Start load fact data ", self.table)
+        self.log.info(f"Start load fact data {self.table}")
         formatted_sql = LoadDataOperator.facts_sql_template.format(
             table=self.table,
             insert_script=self.sql_insert_script
         )
 
-        self.log.debug("Insert SQL Statement ", formatted_sql)
+        self.log.info(f"Insert SQL Statement {formatted_sql}")
         redshift.run(formatted_sql)

@@ -31,7 +31,6 @@ class StageToRedshiftOperator(BaseOperator):
                  s3_key="",
                  json_format="auto",
                  *args, **kwargs):
-
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
         self.conn_id = redshift_conn_id
         self.aws_credentials_id = aws_credentials_id
@@ -40,18 +39,16 @@ class StageToRedshiftOperator(BaseOperator):
         self.s3_key = s3_key,
         self.json_format = json_format
 
-
     def execute(self, context):
         aws_hook = AwsHook(self.aws_credentials_id)
         credentials = aws_hook.get_credentials()
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
-        self.log.info("Clearing data from destination Redshift table")
+        self.log.info(f"Clearing data from destination Redshift ${self.table} table")
         redshift.run("DELETE FROM {}".format(self.table))
 
         self.log.info("Copying data from S3 to Redshift")
-        rendered_key = self.s3_key.format(**context)
-        s3_path = "s3://{}/{}".format(self.s3_bucket, rendered_key)
+        s3_path = "s3://{}/{}".format(self.s3_bucket, self.s3_key)
         json_data_format = self.json_format if self.json_format == 'auto' else "s3://{}/{}/{}".format(self.s3_bucket,
                                                                                                       self.s3_key,
                                                                                                       self.json_format)
@@ -62,5 +59,5 @@ class StageToRedshiftOperator(BaseOperator):
             aws_secret_access_key=credentials.secret_key,
             json_format=json_data_format
         )
-        self.log.debug("formatted script ", formatted_sql)
+        self.log.info(f"Formatted script {formatted_sql}")
         redshift.run(formatted_sql)
