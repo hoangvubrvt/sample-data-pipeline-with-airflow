@@ -32,7 +32,8 @@ def udac_example():
         redshift_conn_id='redshift',
         aws_credentials_id='aws_credentials',
         s3_bucket='udacity-data-engineer-airflow-and-aws',
-        s3_key='log-data/'
+        s3_key='log-data',
+        json_format='log_json_path.json'
     )
 
     stage_songs_to_redshift = StageToRedshiftOperator(
@@ -41,7 +42,7 @@ def udac_example():
         redshift_conn_id='redshift',
         aws_credentials_id='aws_credentials',
         s3_bucket='udacity-data-engineer-airflow-and-aws',
-        s3_key='song-data/'
+        s3_key='song-data'
     )
 
     load_songplays_table = LoadFactOperator(
