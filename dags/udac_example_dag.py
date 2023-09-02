@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 import pendulum
-from airflow.decorators import dag, task
+from airflow.decorators import dag
 from airflow.operators.empty import EmptyOperator
 from operators.stage_redshift import StageToRedshiftOperator
-from operators.load_fact import LoadFactOperator
-from operators.load_dimension import LoadDimensionOperator
-from operators.data_quality import DataQualityOperator
+from operators.load_data import LoadDataOperator
+from operators.has_rows import HasRowsOperator
 from helpers.sql_queries import SqlQueries
 
 default_args = {
@@ -45,42 +44,72 @@ def udac_example():
         s3_key='song-data'
     )
 
-    load_songplays_table = LoadFactOperator(
+    load_songplays_table = LoadDataOperator(
         task_id='Load_songplays_fact_table',
         redshift_conn_id='redshift',
         sql_insert_script=SqlQueries.songplay_table_insert,
         table='songplays'
     )
 
-    load_user_dimension_table = LoadDimensionOperator(
+    load_user_dimension_table = LoadDataOperator(
         task_id='Load_user_dim_table',
         redshift_conn_id='redshift',
         sql_insert_script=SqlQueries.user_table_insert,
         table='users'
     )
 
-    load_song_dimension_table = LoadDimensionOperator(
+    load_song_dimension_table = LoadDataOperator(
         task_id='Load_song_dim_table',
         redshift_conn_id='redshift',
         sql_insert_script=SqlQueries.song_table_insert,
         table='songs'
     )
 
-    load_artist_dimension_table = LoadDimensionOperator(
+    load_artist_dimension_table = LoadDataOperator(
         task_id='Load_artist_dim_table',
         redshift_conn_id='redshift',
         sql_insert_script=SqlQueries.artist_table_insert,
         table='artists'
     )
 
-    load_time_dimension_table = LoadDimensionOperator(
+    load_time_dimension_table = LoadDataOperator(
         task_id='Load_time_dim_table',
         redshift_conn_id='redshift',
         sql_insert_script=SqlQueries.time_table_insert,
         table='time'
     )
 
-    run_quality_checks = DataQualityOperator(
+    has_songplay_data = HasRowsOperator(
+        task_id='Check_songplay_data',
+        redshift_conn_id='redshift',
+        table='songplays'
+    )
+
+    has_user_data = HasRowsOperator(
+        task_id='Check_user_data',
+        redshift_conn_id='redshift',
+        table='users'
+    )
+
+    has_song_data = HasRowsOperator(
+        task_id='Check_song_data',
+        redshift_conn_id='redshift',
+        table='songs'
+    )
+
+    has_artist_data = HasRowsOperator(
+        task_id='Check_artist_data',
+        redshift_conn_id='redshift',
+        table='artists'
+    )
+
+    has_time_data = HasRowsOperator(
+        task_id='Check_time_data',
+        redshift_conn_id='redshift',
+        table='time'
+    )
+
+    run_quality_checks = EmptyOperator(
         task_id='Run_data_quality_checks'
     )
 
@@ -102,7 +131,12 @@ def udac_example():
     load_artist_dimension_table >> run_quality_checks
     load_time_dimension_table >> run_quality_checks
 
-    run_quality_checks >> end_operator
+    run_quality_checks >> has_songplay_data >> end_operator
+    run_quality_checks >> has_user_data >> end_operator
+    run_quality_checks >> has_artist_data >> end_operator
+    run_quality_checks >> has_song_data >> end_operator
+    run_quality_checks >> has_time_data >> end_operator
+
 
 
 udac_example_dag = udac_example()

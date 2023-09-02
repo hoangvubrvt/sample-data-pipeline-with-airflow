@@ -3,7 +3,7 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
 
-class LoadFactOperator(BaseOperator):
+class LoadDataOperator(BaseOperator):
     ui_color = '#F98866'
 
     facts_sql_template = """
@@ -17,7 +17,7 @@ class LoadFactOperator(BaseOperator):
                  redshift_conn_id,
                  sql_insert_script,
                  *args, **kwargs):
-        super(LoadFactOperator, self).__init__(*args, **kwargs)
+        super(LoadDataOperator, self).__init__(*args, **kwargs)
         self.redshift_conn_id = redshift_conn_id
         self.sql_insert_script = sql_insert_script
         self.table = table
@@ -29,7 +29,7 @@ class LoadFactOperator(BaseOperator):
         redshift.run("DELETE FROM {}".format(self.table))
 
         self.log.info("Start load fact data ", self.table)
-        formatted_sql = LoadFactOperator.facts_sql_template.format(
+        formatted_sql = LoadDataOperator.facts_sql_template.format(
             table=self.table,
             insert_script=self.sql_insert_script
         )
