@@ -1,4 +1,3 @@
-FROM apache/airflow:2.3.3
+FROM apache/airflow:latest-python3.8
 
-COPY ./dags /opt/airflow/dags
-COPY ./plugins /opt/airflow/plugins
+COPY . /opt/airflow/dags
