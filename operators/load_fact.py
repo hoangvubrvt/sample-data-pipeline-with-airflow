@@ -6,6 +6,11 @@ from airflow.utils.decorators import apply_defaults
 class LoadFactOperator(BaseOperator):
     ui_color = '#F98866'
 
+    facts_sql_template = """
+        INSERT INTO {table}
+        {insert_script}
+    """
+
     @apply_defaults
     def __init__(self,
                  table,
@@ -24,4 +29,10 @@ class LoadFactOperator(BaseOperator):
         redshift.run("DELETE FROM {}".format(self.table))
 
         self.log.info("Start load fact data ", self.table)
-        redshift.run(self.sql_insert_script)
+        formatted_sql = LoadFactOperator.facts_sql_template.format(
+            table=self.table,
+            insert_script=self.sql_insert_script
+        )
+
+        self.log.debug("Insert SQL Statement ", formatted_sql)
+        redshift.run(formatted_sql)

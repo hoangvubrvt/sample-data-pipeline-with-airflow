@@ -49,23 +49,35 @@ def udac_example():
         task_id='Load_songplays_fact_table',
         redshift_conn_id='redshift',
         sql_insert_script=SqlQueries.songplay_table_insert,
-        table='songplay'
+        table='songplays'
     )
 
     load_user_dimension_table = LoadDimensionOperator(
-        task_id='Load_user_dim_table'
+        task_id='Load_user_dim_table',
+        redshift_conn_id='redshift',
+        sql_insert_script=SqlQueries.user_table_insert,
+        table='users'
     )
 
     load_song_dimension_table = LoadDimensionOperator(
-        task_id='Load_song_dim_table'
+        task_id='Load_song_dim_table',
+        redshift_conn_id='redshift',
+        sql_insert_script=SqlQueries.song_table_insert,
+        table='songs'
     )
 
     load_artist_dimension_table = LoadDimensionOperator(
-        task_id='Load_artist_dim_table'
+        task_id='Load_artist_dim_table',
+        redshift_conn_id='redshift',
+        sql_insert_script=SqlQueries.artist_table_insert,
+        table='artists'
     )
 
     load_time_dimension_table = LoadDimensionOperator(
-        task_id='Load_time_dim_table'
+        task_id='Load_time_dim_table',
+        redshift_conn_id='redshift',
+        sql_insert_script=SqlQueries.time_table_insert,
+        table='time'
     )
 
     run_quality_checks = DataQualityOperator(
