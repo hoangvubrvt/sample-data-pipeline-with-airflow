@@ -37,5 +37,5 @@ class LoadDataOperator(BaseOperator):
             insert_script=self.sql_insert_script
         )
 
-        self.log.info(f"Insert SQL Statement {formatted_sql}")
+        self.log.info(f"Insert SQL Statement '{formatted_sql}'")
         redshift.run(formatted_sql)

@@ -4,14 +4,18 @@ from airflow.decorators import dag
 from airflow.operators.empty import EmptyOperator
 from operators.stage_redshift import StageToRedshiftOperator
 from operators.load_data import LoadDataOperator
-from operators.has_rows import HasRowsOperator
+from operators.data_quality import DataQualityOperator
 from helpers.sql_queries import SqlQueries
 
 default_args = {
     'retries': 3,
     'retry_delay': timedelta(minutes=5),
-    'email_on_retry': False
+    'email_on_retry': False,
+    'owner': 'Vu Hoang',
+    'catchup': False,
+    'depends_on_past': False
 }
+
 
 @dag(
     'importing_sparkify_music_data',
@@ -19,8 +23,7 @@ default_args = {
     description='Load and transform data in Redshift with Airflow',
     schedule_interval="@hourly",
     max_active_runs=1,
-    default_args=default_args,
-    catchup=False
+    default_args=default_args
 )
 def importing_sparkify_music_data():
     start_operator = EmptyOperator(task_id='Begin_execution')
@@ -79,34 +82,39 @@ def importing_sparkify_music_data():
         table='time'
     )
 
-    has_songplay_data = HasRowsOperator(
-        task_id='Check_songplay_data',
+    has_songplay_data = DataQualityOperator(
+        task_id='Check_songplay_data_not_empty',
         redshift_conn_id='redshift',
-        table='songplays'
+        check_sql='SELECT COUNT(*) FROM songplays WHERE songid IS NULL',
+        expected_result=0
     )
 
-    has_user_data = HasRowsOperator(
-        task_id='Check_user_data',
+    has_user_data = DataQualityOperator(
+        task_id='Check_user_data_not_empty',
         redshift_conn_id='redshift',
-        table='users'
+        check_sql='SELECT COUNT(*) FROM users WHERE userid IS NULL',
+        expected_result=0
     )
 
-    has_song_data = HasRowsOperator(
-        task_id='Check_song_data',
+    has_song_data = DataQualityOperator(
+        task_id='Check_song_data_not_empty',
         redshift_conn_id='redshift',
-        table='songs'
+        check_sql='SELECT COUNT(*) FROM songs WHERE songid IS NULL',
+        expected_result=0
     )
 
-    has_artist_data = HasRowsOperator(
-        task_id='Check_artist_data',
+    has_artist_data = DataQualityOperator(
+        task_id='Check_artist_data_not_empty',
         redshift_conn_id='redshift',
-        table='artists'
+        check_sql='SELECT COUNT(*) FROM artists WHERE artistid IS NULL',
+        expected_result=0
     )
 
-    has_time_data = HasRowsOperator(
-        task_id='Check_time_data',
+    has_time_data = DataQualityOperator(
+        task_id='Check_time_data_not_empty',
         redshift_conn_id='redshift',
-        table='time'
+        check_sql='SELECT COUNT(*) FROM time WHERE start_time IS NULL',
+        expected_result=0
     )
 
     run_quality_checks = EmptyOperator(
@@ -115,28 +123,13 @@ def importing_sparkify_music_data():
 
     end_operator = EmptyOperator(task_id='Stop_execution')
 
-    start_operator >> stage_songs_to_redshift
-    start_operator >> stage_events_to_redshift
+    start_operator >> [stage_songs_to_redshift, stage_events_to_redshift] >> load_songplays_table
 
-    stage_songs_to_redshift >> load_songplays_table
-    stage_events_to_redshift >> load_songplays_table
+    load_songplays_table >> [load_song_dimension_table, load_user_dimension_table,
+                             load_artist_dimension_table, load_time_dimension_table] >> run_quality_checks
 
-    load_songplays_table >> load_song_dimension_table
-    load_songplays_table >> load_user_dimension_table
-    load_songplays_table >> load_artist_dimension_table
-    load_songplays_table >> load_time_dimension_table
-
-    load_song_dimension_table >> run_quality_checks
-    load_user_dimension_table >> run_quality_checks
-    load_artist_dimension_table >> run_quality_checks
-    load_time_dimension_table >> run_quality_checks
-
-    run_quality_checks >> has_songplay_data >> end_operator
-    run_quality_checks >> has_user_data >> end_operator
-    run_quality_checks >> has_artist_data >> end_operator
-    run_quality_checks >> has_song_data >> end_operator
-    run_quality_checks >> has_time_data >> end_operator
-
+    run_quality_checks >> [has_time_data, has_artist_data,
+                           has_songplay_data, has_song_data, has_user_data] >> end_operator
 
 
 importing_sparkify_music_data_dag = importing_sparkify_music_data()
