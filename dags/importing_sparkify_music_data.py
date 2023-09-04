@@ -85,35 +85,35 @@ def importing_sparkify_music_data():
     has_songplay_data = DataQualityOperator(
         task_id='Check_songplay_data_not_empty',
         redshift_conn_id='redshift',
-        check_sql='SELECT COUNT(*) FROM songplays WHERE songid IS NULL',
+        check_sql='SELECT * FROM songplays WHERE songid IS NULL',
         expected_result=0
     )
 
     has_user_data = DataQualityOperator(
         task_id='Check_user_data_not_empty',
         redshift_conn_id='redshift',
-        check_sql='SELECT COUNT(*) FROM users WHERE userid IS NULL',
+        check_sql='SELECT * FROM users WHERE userid IS NULL',
         expected_result=0
     )
 
     has_song_data = DataQualityOperator(
         task_id='Check_song_data_not_empty',
         redshift_conn_id='redshift',
-        check_sql='SELECT COUNT(*) FROM songs WHERE songid IS NULL',
+        check_sql='SELECT * FROM songs WHERE songid IS NULL',
         expected_result=0
     )
 
     has_artist_data = DataQualityOperator(
         task_id='Check_artist_data_not_empty',
         redshift_conn_id='redshift',
-        check_sql='SELECT COUNT(*) FROM artists WHERE artistid IS NULL',
+        check_sql='SELECT * FROM artists WHERE artistid IS NULL',
         expected_result=0
     )
 
     has_time_data = DataQualityOperator(
         task_id='Check_time_data_not_empty',
         redshift_conn_id='redshift',
-        check_sql='SELECT COUNT(*) FROM time WHERE start_time IS NULL',
+        check_sql='SELECT * FROM time WHERE start_time IS NULL',
         expected_result=0
     )
 
